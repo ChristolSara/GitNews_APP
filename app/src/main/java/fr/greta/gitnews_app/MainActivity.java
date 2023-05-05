@@ -3,6 +3,7 @@ package fr.greta.gitnews_app;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -15,6 +16,7 @@ import java.util.List;
 
 import fr.greta.gitnews_app.model.GitUser;
 import fr.greta.gitnews_app.model.GitUsersRespense;
+import fr.greta.gitnews_app.model.UserListViewModel;
 import fr.greta.gitnews_app.service.GitRepoServiceAPI;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -23,6 +25,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
+    List<GitUser> data = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,15 +33,19 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
+        //autoriser les requette vers url img
+        StrictMode.ThreadPolicy policy =new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+
         //récupérer les views
         EditText editTextQuery = findViewById(R.id.editTextQuery);
         Button buttonSearch = findViewById(R.id.buttonSearch);
         ListView listViewUsers = findViewById(R.id.listViewUsers);
 
-        /////préparer les données
-        List<String> data =new ArrayList<>();
-       final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,data);
-        listViewUsers.setAdapter(arrayAdapter);
+       //final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,data);
+        UserListViewModel listViewModel = new UserListViewModel(this,R.layout.users_list_view,data);
+        listViewUsers.setAdapter(listViewModel);
 
         //retrofit :faire appel à notree api avec retrofit
         final Retrofit retrofit = new Retrofit.Builder()
@@ -67,9 +74,10 @@ public class MainActivity extends AppCompatActivity {
                         }else{
                             GitUsersRespense gitUsersRespense=response.body();
                             for(GitUser user:gitUsersRespense.users){
-                                data.add(user.login);
+                                data.add(user);
                             }
-                            arrayAdapter.notifyDataSetChanged();
+                            //notifier l view
+                            listViewModel.notifyDataSetChanged();
                         }
 
                     }
